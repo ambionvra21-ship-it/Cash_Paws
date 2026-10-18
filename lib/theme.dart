@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 
-const kBg = Color(0xFF05070D);
-const kSurface = Color(0xFF0B1220);
-const kLine = Color(0xFF12315C);
-const kNeon = Color(0xFF14D1FF);
-const kNeon2 = Color(0xFF2F6BFF);
+class CashPawsColors {
+  // Backgrounds
+  static const Color backgroundMidnight = Color(0xFF070B19);
+  static const Color cardBackground = Color(0xFF0F162A);
+  
+  // Accents & Glows
+  static const Color neonBlue = Color(0xFF00E5FF);
+  static const Color electricIndigo = Color(0xFF536DFE);
+  static const Color neonGreen = Color(0xFF00E676);
 
-final cashPawsTheme = ThemeData(
-  useMaterial3: true,
-  brightness: Brightness.dark,
-  scaffoldBackgroundColor: kBg,
-  colorScheme: const ColorScheme.dark(primary: kNeon, secondary: kNeon2, surface: kSurface),
-  navigationBarTheme: const NavigationBarThemeData(backgroundColor: kSurface, indicatorColor: kLine),
-);
+  // Button Gradients
+  static const LinearGradient primaryGradient = LinearGradient(
+    colors: [neonBlue, electricIndigo],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+}

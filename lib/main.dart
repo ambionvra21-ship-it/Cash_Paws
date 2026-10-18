@@ -15,8 +15,8 @@ class CashPawsApp extends StatelessWidget {
     return MaterialApp(
       title: 'CashPaws',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(), // Standard dark mode to bypass the 'cashPawsTheme' undefined error
-      home: const HomeScreen(), // Launches your newly upgraded dashboard first
+      theme: ThemeData.dark(), 
+      home: const HomeScreen(),
       routes: {
         '/home': (context) => const HomeScreen(),
         '/walk': (context) => const WalkScreen(),

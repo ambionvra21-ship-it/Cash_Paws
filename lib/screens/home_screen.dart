@@ -69,7 +69,6 @@ Widget buildGlowingProgress(double progressValue) {
         ),
       ),
 
-      import 'package:flutter/material.dart';
 // Replace 'your_project_name' with your actual Flutter project package name
 import 'package:your_project_name/theme.dart'; 
 

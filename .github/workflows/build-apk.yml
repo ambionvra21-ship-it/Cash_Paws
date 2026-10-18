@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,22 +23,18 @@ jobs:
         run: |
           flutter create --org com.cashpaws --project-name cashpaws --platforms=android .
           rm -rf test
-      - name: Force Android Gradle Plugin Upgrade
-        run: |
-          if [ -f android/settings.gradle ]; then
-            sed -i 's/"com.android.application" version "[^"]*"/"com.android.application" version "8.1.4"/g' android/settings.gradle
-          fi
-          if [ -f android/build.gradle ]; then
-            sed -i 's/gradle:[0-9.]*/gradle:8.1.4/g' android/build.gradle
-          fi
       - name: Apply CashPaws Android settings
         run: python3 tools/configure_android.py
       - run: flutter pub get
       - run: dart run flutter_launcher_icons
       - run: dart run flutter_native_splash:create
-      - name: Build Fat Release APK
-        run: flutter build apk --release
+      - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
           name: cashpaws-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: CashPaws build ${{ github.run_number }}
+          files: build/app/outputs/flutter-apk/app-release.apk

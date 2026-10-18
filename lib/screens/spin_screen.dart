@@ -34,7 +34,7 @@ class _SpinScreenState extends State<SpinScreen> {
     final today = DateTime.now().toUtc().toIso8601String().substring(0, 10);
     return SafeArea(
       child: Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
+        child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
           const Text('Daily spin', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           const Icon(Icons.arrow_drop_down, size: 44, color: Color(0xFF2DFFB0)),
@@ -64,7 +64,7 @@ class _SpinScreenState extends State<SpinScreen> {
               );
             },
           ),
-        ]),
+        ])),
       ),
     );
   }

@@ -18,8 +18,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _loaded = false;
 
   Future<void> _signOut() async {
-    await GoogleSignIn().signOut();
-    await sb.auth.signOut();
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {}
+    try {
+      await sb.auth.signOut();
+    } catch (_) {}
     if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
   }
 

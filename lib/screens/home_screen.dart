@@ -1,76 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cashpaws/theme.dart';
-import 'package:cashpaws/screens/home_screen.dart';
-import 'package:cashpaws/screens/walk_screen.dart';
-import 'package:cashpaws/screens/wallet_screen.dart';
-
-class CashPawsColors {
-  // Backgrounds
-  static const Color backgroundMidnight = Color(0xFF070B19);
-  static const Color cardBackground = Color(0xFF0F162A);
-  
-  // Accents & Glows
-  static const Color neonBlue = Color(0xFF00E5FF);
-  static const Color electricIndigo = Color(0xFF536DFE);
-  static const Color neonGreen = Color(0xFF00E676);
-
-  // Button Gradients
-  static const LinearGradient primaryGradient = LinearGradient(
-    colors: [neonBlue, electricIndigo],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-}
-
-Widget buildGlowingProgress(double progressValue) {
-  return Stack(
-    alignment: Alignment.center,
-    children: [
-      // Track Background
-      SizedBox(
-        width: 100,
-        height: 100,
-        child: CircularProgressIndicator(
-          value: 1.0,
-          strokeWidth: 10,
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withOpacity(0.05)),
-        ),
-      ),
-      // Glowing Neon Progress Arc
-      SizedBox(
-        width: 100,
-        height: 100,
-        child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: CashPawsColors.neonGreen.withOpacity(0.2),
-                blurRadius: 10,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: CircularProgressIndicator(
-            value: progressValue, // e.g., 0.75 for 3/4
-            strokeWidth: 10,
-            strokeCap: StrokeCap.round, // Smooth rounded edges on the arc bar
-            valueColor: const AlwaysStoppedAnimation<Color>(CashPawsColors.neonGreen),
-          ),
-        ),
-      ),
-      // Center Text
-      Text(
-        "${(progressValue * 4).toInt()}/4",
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-
-// Replace 'your_project_name' with your actual Flutter project package name
-import 'package:your_project_name/theme.dart'; 
+import 'package:cashpaws/theme.dart'; 
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -81,18 +10,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   
-  // ==========================================
-  // 5. MAIN APPLICATION SCAFFOLD
-  // ==========================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CashPawsColors.backgroundMidnight, // Uniform dark canvas
+      backgroundColor: CashPawsColors.backgroundMidnight,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Your newly built premium card container
+              // Daily Missions Card Container
               buildDashboardCard(
                 child: Column(
                   children: [
@@ -105,7 +31,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // Your neon custom progress wheel
                     buildGlowingProgress(0.75), 
                   ],
                 ),
@@ -113,11 +38,10 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                // Your glowing action capsule button
                 child: buildGlowingButton(
                   text: "Start tracking",
                   onPressed: () {
-                    // Action handler when pressed
+                    // Handler logic
                   },
                 ),
               ),
@@ -128,18 +52,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ==========================================
-  // 2. GLASSMORPHIC CARD CONTAINER COMPONENT
-  // ==========================================
+  // Component: Glassmorphic Card Container
   Widget buildDashboardCard({required Widget child}) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: CashPawsColors.cardBackground,
-        borderRadius: BorderRadius.circular(24), // Smoother, rounder modern corners
+        borderRadius: BorderRadius.circular(24), 
         border: Border.all(
-          color: CashPawsColors.neonBlue.withOpacity(0.15), // Subtle neon outline
+          color: CashPawsColors.neonBlue.withOpacity(0.15), 
           width: 1,
         ),
         boxShadow: [
@@ -150,25 +72,23 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      child: child,
+      child: child;
     );
   }
 
-  // ==========================================
-  // 3. GLOWING GRADIENT BUTTON COMPONENT
-  // ==========================================
+  // Component: Glowing Action Capsule Button
   Widget buildGlowingButton({required String text, required VoidCallback onPressed}) {
     return Container(
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
         gradient: CashPawsColors.primaryGradient,
-        borderRadius: BorderRadius.circular(28), // Fully rounded capsule look
+        borderRadius: BorderRadius.circular(28), 
         boxShadow: [
           BoxShadow(
             color: CashPawsColors.neonBlue.withOpacity(0.4),
             blurRadius: 12,
-            offset: const Offset(0, 4), // Generates a soft neon under-glow
+            offset: const Offset(0, 4), 
           ),
         ],
       ),
@@ -194,14 +114,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ==========================================
-  // 4. NEON CIRCULAR PROGRESS INDICATOR COMPONENT
-  // ==========================================
+  // Component: Neon Circular Progress Wheel
   Widget buildGlowingProgress(double progressValue) {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Track Background
         SizedBox(
           width: 100,
           height: 100,
@@ -211,7 +128,6 @@ class _HomeScreenState extends State<HomeScreen> {
             valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withOpacity(0.05)),
           ),
         ),
-        // Glowing Neon Progress Arc
         SizedBox(
           width: 100,
           height: 100,
@@ -227,14 +143,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             child: CircularProgressIndicator(
-              value: progressValue, // e.g., 0.75 for 3/4
+              value: progressValue, 
               strokeWidth: 10,
-              strokeCap: StrokeCap.round, // Smooth rounded edges on the arc bar
+              strokeCap: StrokeCap.round, 
               valueColor: const AlwaysStoppedAnimation<Color>(CashPawsColors.neonGreen),
             ),
           ),
         ),
-        // Center Text
         Text(
           "${(progressValue * 4).toInt()}/4",
           style: const TextStyle(
@@ -246,8 +161,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
-}
-
-    ],
-  );
 }

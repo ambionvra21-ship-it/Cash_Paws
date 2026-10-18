@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 Widget buildGlowingProgress(double progressValue) {
   return Stack(
     alignment: Alignment.center,

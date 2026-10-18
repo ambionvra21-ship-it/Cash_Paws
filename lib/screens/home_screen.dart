@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      child: child;
+      child: child, // Fixed typo: replaced semicolon with a comma
     );
   }
 

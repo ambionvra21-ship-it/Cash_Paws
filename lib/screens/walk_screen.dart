@@ -4,9 +4,26 @@ import '../services/backend.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme.dart';
 
 const goal = 5000;
+
+String _clock(DateTime t) {
+  final h = t.hour % 12 == 0 ? 12 : t.hour % 12;
+  return '$h:${t.minute.toString().padLeft(2, '0')} ${t.hour < 12 ? 'AM' : 'PM'}';
+}
+
+/// Daily steps reset at midnight UTC; this gives that moment in the phone's own time.
+DateTime _resetAt() {
+  final n = DateTime.now().toUtc();
+  return DateTime.utc(n.year, n.month, n.day + 1).toLocal();
+}
+
+String _resetIn() {
+  final d = _resetAt().difference(DateTime.now());
+  return '${d.inHours}h ${d.inMinutes % 60}m';
+}
 
 String _today() => DateTime.now().toUtc().toIso8601String().substring(0, 10);
 
@@ -42,6 +59,7 @@ class _WalkScreenState extends State<WalkScreen> {
   StreamSubscription<StepCount>? _sub;
   Timer? _timer;
   int steps = 0, synced = 0;
+  DateTime? lastSync;
   String? problem;
 
   @override
@@ -66,17 +84,39 @@ class _WalkScreenState extends State<WalkScreen> {
     }, onError: (_) {
       if (mounted) setState(() => problem = 'This phone has no step sensor.');
     });
-    _timer ??= Timer.periodic(const Duration(seconds: 60), (_) => _sync());
+    _timer ??= Timer.periodic(const Duration(seconds: 60), (_) {
+      _sync();
+      if (mounted) setState(() {}); // keeps the clock fresh
+    });
   }
 
   /// The server decides how many coins the steps are worth.
-  Future<void> _sync() async {
+  /// Automatic syncs are silent; the Sync now button shows what happened.
+  Future<void> _sync({bool manual = false}) async {
     final sent = steps;
-    if (sent == synced) return;
+    final m = manual ? ScaffoldMessenger.of(context) : null;
+    if (sent == synced) {
+      if (manual) {
+        if (mounted) setState(() => lastSync = DateTime.now());
+        m!.showSnackBar(SnackBar(
+            content: Text(sent == 0 ? 'No steps yet. Walk a few steps, then try again.' : 'Already up to date.')));
+      }
+      return;
+    }
     try {
-      await sb.rpc('sync_steps', params: {'p': {'steps': sent}});
+      final r = await sb.rpc('sync_steps', params: {'p': {'steps': sent}});
       synced = sent;
-    } catch (_) {/* retry on next tick */}
+      if (mounted) setState(() => lastSync = DateTime.now());
+      if (manual) {
+        final coins = ((r as Map)['coins'] ?? 0) as int;
+        m!.showSnackBar(SnackBar(
+            content: Text(coins > 0 ? 'Synced! +$coins coins' : 'Synced. ${100 - sent % 100} more steps for the next coin.')));
+      }
+    } on PostgrestException catch (e) {
+      if (manual) m!.showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (_) {
+      if (manual) m!.showSnackBar(const SnackBar(content: Text('Could not sync. Check your internet connection.')));
+    }
   }
 
   @override
@@ -123,12 +163,21 @@ class _WalkScreenState extends State<WalkScreen> {
             },
           ),
           const SizedBox(height: 16),
+          Text('Time now: ${_clock(DateTime.now())}', style: const TextStyle(color: Colors.white70)),
+          Text(lastSync == null ? 'Not synced yet' : 'Last synced: ${_clock(lastSync!)}',
+              style: const TextStyle(color: Colors.white70)),
+          Text('Steps reset in ${_resetIn()} (at ${_clock(_resetAt())})', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(28, 8, 28, 12),
+            child: Text('Steps sync by themselves every 50 steps or each minute. Sync now sends them right away.',
+                textAlign: TextAlign.center, style: TextStyle(color: Colors.white54, fontSize: 12)),
+          ),
           if (problem != null) ...[
             Padding(padding: const EdgeInsets.symmetric(horizontal: 28), child: Text(problem!, textAlign: TextAlign.center)),
             TextButton(onPressed: _start, child: const Text('Try again')),
             TextButton(onPressed: openAppSettings, child: const Text('Open settings')),
           ] else
-            OutlinedButton(onPressed: _sync, child: const Text('Sync now')),
+            OutlinedButton(onPressed: () => _sync(manual: true), child: const Text('Sync now')),
         ]),
       ),
     );

@@ -67,3 +67,9 @@ dashboard). Upgrade before launch so the app never goes offline.
 4. When it turns green, open the run and download `cashpaws-apk` (a zip with app-release.apk).
 5. Send the APK to your phone and install it (allow "Install unknown apps" when asked).
 The default test package name is com.cashpaws.app. Choose your final name before publishing.
+
+## Permanent signing key and package name
+- The app id is com.cashpaws.cashpaws (org com.cashpaws + project cashpaws). Decide your final name before the Play Store.
+- Builds are signed with the key stored in the GitHub secrets KEYSTORE_BASE64, KEYSTORE_PASSWORD,
+  KEY_ALIAS and KEY_PASSWORD, so updates install over older versions and Google sign-in keeps working.
+- Back up the signing secrets file. For Play Store release, use Play App Signing.

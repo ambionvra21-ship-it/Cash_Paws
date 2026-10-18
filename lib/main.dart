@@ -1,3 +1,7 @@
+import 'package:cashpaws/screens/home_screen.dart';
+import 'package:cashpaws/screens/walk_screen.dart';
+import 'package:cashpaws/screens/wallet_screen.dart';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config.dart';

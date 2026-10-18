@@ -33,7 +33,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
         body: Center(
-          child: Padding(
+          child: SingleChildScrollView(child: Padding(
             padding: const EdgeInsets.all(28),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               Image.asset('assets/splash.png', width: 120),
@@ -45,7 +45,7 @@ class LoginScreen extends StatelessWidget {
               FilledButton(onPressed: () => _google(context), child: const Text('Continue with Google')),
               TextButton(onPressed: () => _guest(context), child: const Text('Continue as guest')),
             ]),
-          ),
+          )),
         ),
       );
 }

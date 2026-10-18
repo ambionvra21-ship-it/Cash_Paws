@@ -1,0 +1,35 @@
+name: cashpaws
+description: CashPaws rewards app
+publish_to: none
+version: 0.1.0+1
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  google_sign_in: ^6.2.1
+  supabase_flutter: ^2.8.0
+  google_mobile_ads: ^5.2.0
+  share_plus: ^10.1.2
+  pedometer: ^4.0.2
+  permission_handler: ^11.3.1
+  shared_preferences: ^2.3.2
+dev_dependencies:
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.1
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/splash.png
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/icon.png
+  adaptive_icon_background: "#05070D"
+  adaptive_icon_foreground: assets/icon_fg.png
+flutter_native_splash:
+  color: "#05070D"
+  image: assets/splash.png
+  android_12:
+    color: "#05070D"
+    image: assets/splash.png

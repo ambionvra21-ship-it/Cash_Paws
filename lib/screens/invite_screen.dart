@@ -57,7 +57,7 @@ class _InviteScreenState extends State<InviteScreen> {
           label: const Text('Share invite'),
           onPressed: () async {
             final code = await _code;
-            Share.share('Join me on CashPaws and earn rewards! Use my code $code.\nDownload: $kPlayStoreUrl');
+            Share.share('Join me on CashPaws and earn rewards!\nDownload the app: $kPlayStoreUrl\nAfter installing, open Invite and enter my code $code.');
           },
         ),
         const SizedBox(height: 16),

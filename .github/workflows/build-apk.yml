@@ -25,6 +25,24 @@ jobs:
           rm -rf test
       - name: Apply CashPaws Android settings
         run: python3 tools/configure_android.py
+      - name: Raise Android build tool versions
+        run: |
+          python3 - <<'PY'
+          import re, pathlib
+          def sub(path, pat, rep):
+              p = pathlib.Path(path)
+              if p.exists():
+                  t = p.read_text()
+                  n, c = re.subn(pat, rep, t)
+                  p.write_text(n)
+                  print(path, 'patched' if c else 'NO MATCH')
+          for f in ['android/settings.gradle', 'android/settings.gradle.kts']:
+              sub(f, r'''(com\.android\.application["')\s]*version\s*["'])[\d.]+''', r'\g<1>8.6.0')
+              sub(f, r'''(org\.jetbrains\.kotlin\.android["')\s]*version\s*["'])[\d.]+''', r'\g<1>1.9.24')
+          sub('android/gradle/wrapper/gradle-wrapper.properties', r'gradle-[\d.]+-(all|bin)\.zip', 'gradle-8.7-all.zip')
+          PY
+          grep -n "com.android.application\|kotlin.android" android/settings.gradle* || true
+          cat android/gradle/wrapper/gradle-wrapper.properties
       - run: flutter pub get
       - run: dart run flutter_launcher_icons
       - run: dart run flutter_native_splash:create

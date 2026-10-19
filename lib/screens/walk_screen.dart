@@ -60,6 +60,7 @@ class _WalkScreenState extends State<WalkScreen> {
   Timer? _timer;
   int steps = 0, synced = 0;
   DateTime? lastSync;
+  int? raw; // raw phone step sensor reading, for testing
   String? problem;
 
   @override
@@ -79,7 +80,10 @@ class _WalkScreenState extends State<WalkScreen> {
     _sub = Pedometer.stepCountStream.listen((e) async {
       final s = await _todaySteps(e.steps);
       if (!mounted) return;
-      setState(() => steps = s);
+      setState(() {
+        steps = s;
+        raw = e.steps;
+      });
       if (s - synced >= 50) _sync();
     }, onError: (_) {
       if (mounted) setState(() => problem = 'This phone has no step sensor.');
@@ -163,6 +167,9 @@ class _WalkScreenState extends State<WalkScreen> {
             },
           ),
           const SizedBox(height: 16),
+          Text(raw == null ? 'Waiting for the step sensor. Walk about 20 steps with the app open.' : 'Step sensor total: $raw',
+              textAlign: TextAlign.center, style: const TextStyle(color: Colors.white38, fontSize: 11)),
+          const SizedBox(height: 6),
           Text('Time now: ${_clock(DateTime.now())}', style: const TextStyle(color: Colors.white70)),
           Text(lastSync == null ? 'Not synced yet' : 'Last synced: ${_clock(lastSync!)}',
               style: const TextStyle(color: Colors.white70)),

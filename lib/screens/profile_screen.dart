@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/backend.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/glow.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../config.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../services/api.dart';
 import '../theme.dart';
@@ -20,6 +22,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _loaded = false;
   final upEmail = TextEditingController();
   final upPass = TextEditingController();
+
+  Future<void> _open(String url) async {
+    try {
+      final ok = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      if (!ok && mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open the page.')));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open the page.')));
+    }
+  }
 
   /// Turns a guest account into a real one, keeping its coins.
   Future<void> _upgrade() async {
@@ -132,6 +143,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ListTile(title: const Text('Friends joined'), trailing: Text('${d['refs'] ?? 0}')),
             ListTile(title: const Text('Member since'), trailing: Text('${d['joined'] ?? '-'}')),
             ListTile(title: const Text('Referral code'), trailing: Text('${d['code'] ?? '-'}', style: const TextStyle(color: kNeon))),
+            ListTile(title: const Text('Privacy Policy'), trailing: const Icon(Icons.open_in_new, size: 18), onTap: () => _open(kPrivacyUrl)),
+            ListTile(title: const Text('Terms of Use'), trailing: const Icon(Icons.open_in_new, size: 18), onTap: () => _open(kTermsUrl)),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Text('One account per device. Duplicate or fake accounts are removed.', style: TextStyle(color: Colors.white54, fontSize: 12)),

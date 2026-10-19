@@ -157,7 +157,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ],
               ),
               const SizedBox(height: 20),
-              // Monitoring Graph Panel Widget Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -201,40 +200,42 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               title: Text('Lucky Spin Wheel ($remainingSpins/5 Left)', style: const TextStyle(color: CashPawsColors.textDark, fontSize: 16, fontWeight: FontWeight.bold)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Native Canvas Animated Custom Painter Wheel Spinner
-                  Transform.rotate(
-                    angle: _wheelRotationAngle,
-                    child: CustomPaint(
-                      size: const Size(160, 160),
-                      painter: BasicWheelPainter(),
+                  Center(
+                    child: Transform.rotate(
+                      angle: _wheelRotationAngle,
+                      child: CustomPaint(
+                        size: const Size(160, 160),
+                        painter: BasicWheelPainter(),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const Icon(Icons.arrow_drop_up, color: CashPawsColors.rewardOrange, size: 32),
+                  const SizedBox(height: 4),
+                  const Center(child: Icon(Icons.arrow_drop_up, color: CashPawsColors.rewardOrange, size: 32)),
                   const Text('Every spin safely launches a sponsor video ad!', style: TextStyle(fontSize: 12, color: CashPawsColors.textSecondary), textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  // FIXED: Moved button inside content column and completely removed the broken actionsAlignment layout property
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: CashPawsColors.rewardOrange,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 0,
+                    ),
+                    onPressed: remainingSpins <= 0 || _wheelController.isAnimating || isDailyLimitMaxed ? null : () {
+                      _wheelController.forward(from: 0.0).then((_) {
+                        setDialogState(() { remainingSpins--; });
+                        Navigator.pop(context); 
+                        _handleWatchVideoReward(isSpinReward: true); 
+                      });
+                    },
+                    child: const Text('LAUNCH SPIN GAME', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
                 ],
               ),
-              actionsAlignment: MainAxisAlignment.stretch,
-              actions: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: CashPawsColors.rewardOrange,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
-                  ),
-                  onPressed: remainingSpins <= 0 || _wheelController.isAnimating || isDailyLimitMaxed ? null : () {
-                    // Trigger the animation rotation sequence first
-                    _wheelController.forward(from: 0.0).then((_) {
-                      setDialogState(() { remainingSpins--; });
-                      Navigator.pop(context); 
-                      _handleWatchVideoReward(isSpinReward: true); // Force ad display loop immediately on spin stop
-                    });
-                  },
-                  child: const Text('LAUNCH SPIN GAME', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
             );
           },
         );
@@ -300,7 +301,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ],
     );
   }
-
   @override
   Widget build(BuildContext context) {
     double dailyProgress = (currentCoins / CashPawsConfig.maxDailyCoins).clamp(0.0, 1.0);
@@ -327,7 +327,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: GestureDetector(
-              onTap: _openProfileSettingsWindow, // Fixed: Opens separate profile summary layout center window on tap
+              onTap: _openProfileSettingsWindow, 
               child: const CircleAvatar(
                 radius: 16,
                 backgroundColor: Colors.white,
@@ -382,8 +382,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                                        // --- 2. Live Wallet Value Indicator ---
+                    // --- 2. Live Wallet Value Indicator ---
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(color: CashPawsColors.cardSurface, borderRadius: BorderRadius.circular(12)),

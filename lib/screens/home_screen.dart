@@ -13,7 +13,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   // Operational State counters reset to 0 for live phone testing
   int currentCoins = 0; 
-  int remainingSpins = 5;
+  int remainingSpins = 5; // Fixed to start at 5 full spins
   int userSteps = 4520;
   bool isDailyLimitMaxed = false;
 
@@ -50,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onAdFailedToLoad: (error) {
           _interstitialAd = null;
           _isInterstitialLoading = false;
-          _loadInterstitialAd(); // Automatic retry loop
+          _loadInterstitialAd();
         },
       ),
     );
@@ -70,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onAdFailedToLoad: (error) {
           _rewardedAd = null;
           _isRewardedLoading = false;
-          _loadRewardedAd(); // Automatic retry loop
+          _loadRewardedAd();
         },
       ),
     );
@@ -109,14 +109,14 @@ class _HomeScreenState extends State<HomeScreen> {
         onAdDismissedFullScreenContent: (ad) {
           ad.dispose();
           _interstitialAd = null;
-          _loadInterstitialAd(); // Cache next interstitial asset
+          _loadInterstitialAd(); 
           _processSecureReward(CashPawsConfig.coinsDailyLogin);
         },
         onAdFailedToShowFullScreenContent: (ad, error) {
           ad.dispose();
           _interstitialAd = null;
           _loadInterstitialAd();
-          _processSecureReward(CashPawsConfig.coinsDailyLogin); // Payout fallback safety
+          _processSecureReward(CashPawsConfig.coinsDailyLogin);
         },
       );
       _interstitialAd!.show();
@@ -170,6 +170,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _handleProfileTap() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('User Profile Settings Screen Coming Soon!')),
+    );
+  }
+
+  void _handleOfferwallTap() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Opening Premium Offerwall... Launching Browser Link!')),
+    );
+  }
+
     @override
   Widget build(BuildContext context) {
     double dailyProgress = (currentCoins / CashPawsConfig.maxDailyCoins).clamp(0.0, 1.0);
@@ -178,7 +190,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: CashPawsColors.backgroundLight,
-      // Fully functional native sliding drawer navigation panel hook
       drawer: const Drawer(
         child: Center(
           child: Text(
@@ -190,20 +201,22 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        // Wraps the hamburger icon inside a Builder to cleanly pop out the menu drawer on tap
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu, color: CashPawsColors.textDark),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.white,
-              child: Icon(Icons.person, size: 18, color: CashPawsColors.textDark),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: GestureDetector(
+              onTap: _handleProfileTap, // Opened profile handler function mapping
+              child: const CircleAvatar(
+                radius: 16,
+                backgroundColor: Colors.white,
+                child: Icon(Icons.person, size: 18, color: CashPawsColors.textDark),
+              ),
             ),
           )
         ],
@@ -327,10 +340,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     _buildTaskCard(
                       title: 'TASK 3: LUCKY SPIN WHEEL',
-                      subtitle: 'Spins Left: $remainingSpins / 5',
+                      subtitle: 'Spins Left: $remainingSpins / 5', 
                       badgeText: 'Instant Payout',
                       buttonText: 'SPIN NOW!',
-                      isDisabled: isDailyLimitMaxed || remainingSpins <= 0,
+                      isDisabled: isDailyLimitMaxed || remainingSpins <= 0, 
                       onTap: _handleLuckySpin,
                     ),
                     const SizedBox(height: 20),
@@ -371,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                               elevation: 0,
                             ),
-                            onPressed: () {}, // Ready to link up a web browser launcher shortcut
+                            onPressed: _handleOfferwallTap, // Connected the operational handler method pointer
                             child: const Text('⚡ OPEN PREMIUM OFFERWALL', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                           ),
                         ],

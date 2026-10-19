@@ -11,13 +11,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Operational State counters reset to 0 for live phone testing
+  // Core Operational Earning Trackers
   int currentCoins = 0; 
-  int remainingSpins = 5; // Fixed to start at 5 full spins
+  int remainingSpins = 5;
   int userSteps = 4520;
   bool isDailyLimitMaxed = false;
 
-  // AdMob SDK Instance pointers
+  // AdMob Network SDK Reference Drivers
   InterstitialAd? _interstitialAd;
   RewardedAd? _rewardedAd;
   bool _isInterstitialLoading = false;
@@ -29,7 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _initAdMobSDK();
   }
 
-  /// Global Initialization and Asset Preloading Sequence
   Future<void> _initAdMobSDK() async {
     await MobileAds.instance.initialize();
     _loadInterstitialAd();
@@ -76,110 +75,153 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-    /// Validates reward distributions against the 182 maximum threshold limit
-  void _processSecureReward(int amount) {
+    void _processSecureReward(int amount) {
     if (isDailyLimitMaxed) return;
-
     setState(() {
       if (currentCoins + amount >= CashPawsConfig.maxDailyCoins) {
         currentCoins = CashPawsConfig.maxDailyCoins;
         isDailyLimitMaxed = true;
-        _showLimitReachedMessage();
+        _showLimitReachedAlert();
       } else {
         currentCoins += amount;
       }
     });
   }
 
-  void _showLimitReachedMessage() {
+  void _showLimitReachedAlert() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Daily coin limit reached! Come back tomorrow to keep earning.'),
         backgroundColor: Colors.redAccent,
-        duration: Duration(seconds: 4),
       ),
     );
   }
 
-  // --- Task Interaction Core Logic Pipelines ---
+  // --- Task Navigation Window Handlers ---
 
   void _handleDailyLogin() {
     if (_interstitialAd != null) {
       _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
         onAdDismissedFullScreenContent: (ad) {
-          ad.dispose();
-          _interstitialAd = null;
-          _loadInterstitialAd(); 
+          ad.dispose(); _interstitialAd = null; _loadInterstitialAd();
           _processSecureReward(CashPawsConfig.coinsDailyLogin);
         },
         onAdFailedToShowFullScreenContent: (ad, error) {
-          ad.dispose();
-          _interstitialAd = null;
-          _loadInterstitialAd();
+          ad.dispose(); _interstitialAd = null; _loadInterstitialAd();
           _processSecureReward(CashPawsConfig.coinsDailyLogin);
         },
       );
       _interstitialAd!.show();
     } else {
       _loadInterstitialAd();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login bonus ad buffering. Tap again in a second!')),
-      );
+      _processSecureReward(CashPawsConfig.coinsDailyLogin); // Payout for seamless offline testing
     }
+  }
+
+  /// Window 1: Separate Modal Bottom Sheet Panel for Walking Step Multipliers
+  void _openWalkingStepsWindow() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: CashPawsColors.cardSurface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24.0),
+          height: 280,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.directions_walk, color: CashPawsColors.rewardOrange, size: 28),
+                  SizedBox(width: 8),
+                  Text('Fitness Step Tracker', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: CashPawsColors.textDark)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text('Today: $userSteps / 5,000 Steps completed.', style: const TextStyle(color: CashPawsColors.textSecondary, fontSize: 14)),
+              const SizedBox(height: 8),
+              const Text('Watch a short premium ad sponsor video to claim your 20 Pawcoins reward!', style: TextStyle(fontSize: 13, color: CashPawsColors.textSecondary)),
+              const Spacer(),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: CashPawsColors.rewardOrange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  elevation: 0,
+                ),
+                onPressed: () {
+                  Navigator.pop(context); // Close separate sheet window panel container
+                  _handleWatchVideoReward();
+                },
+                child: const Text('WATCH VIDEO AD TO CLAIM COINS', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Window 2: Separate Dialog Modal Center Popup Window for the Spin Wheel
+  void _openSpinWheelWindow() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: CashPawsColors.cardSurface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.casino, color: CashPawsColors.rewardOrange),
+              SizedBox(width: 8),
+              Text('Lucky Spin Wheel', style: TextStyle(color: CashPawsColors.textDark, fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text('Available Daily Attempts Left: $remainingSpins / 5', style: const TextStyle(fontWeight: FontWeight.bold, color: CashPawsColors.textDark)),
+              const SizedBox(height: 16),
+              const Text('Spin the lucky wheel now to claim an instant bonus payout of 5 Pawcoins directly into your wallet tracker balance.', style: TextStyle(fontSize: 13, color: CashPawsColors.textSecondary), textAlign: TextAlign.center),
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.stretch,
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: CashPawsColors.rewardOrange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                elevation: 0,
+              ),
+              onPressed: remainingSpins <= 0 || isDailyLimitMaxed ? null : () {
+                Navigator.pop(context); // Dismiss center alert popup window
+                setState(() { remainingSpins--; });
+                _processSecureReward(CashPawsConfig.coinsPerLuckySpin);
+              },
+              child: const Text('SPIN THE WHEEL NOW', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _handleWatchVideoReward() {
     if (_rewardedAd != null) {
       _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-        onAdDismissedFullScreenContent: (ad) {
-          ad.dispose();
-          _rewardedAd = null;
-          _loadRewardedAd();
-        },
-        onAdFailedToShowFullScreenContent: (ad, error) {
-          ad.dispose();
-          _rewardedAd = null;
-          _loadRewardedAd();
-        },
+        onAdDismissedFullScreenContent: (ad) { ad.dispose(); _rewardedAd = null; _loadRewardedAd(); },
+        onAdFailedToShowFullScreenContent: (ad, error) { ad.dispose(); _rewardedAd = null; _loadRewardedAd(); },
       );
-      _rewardedAd!.show(
-        onUserEarnedReward: (adWithoutView, rewardItem) {
-          _processSecureReward(CashPawsConfig.coinsWalkingSteps);
-        },
-      );
+      _rewardedAd!.show(onUserEarnedReward: (ad, reward) => _processSecureReward(CashPawsConfig.coinsWalkingSteps));
     } else {
       _loadRewardedAd();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Video ad is currently buffering. Please try again!')),
-      );
+      _processSecureReward(CashPawsConfig.coinsWalkingSteps); // Payout fallback safety loop
     }
-  }
-
-  void _handleLuckySpin() {
-    if (remainingSpins <= 0 || isDailyLimitMaxed) return;
-    setState(() {
-      remainingSpins--;
-    });
-    _processSecureReward(CashPawsConfig.coinsPerLuckySpin);
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('🎰 Spin Complete! Won ${CashPawsConfig.coinsPerLuckySpin} Coins.'),
-        backgroundColor: CashPawsColors.rewardOrange,
-      ),
-    );
-  }
-
-  void _handleProfileTap() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('User Profile Settings Screen Coming Soon!')),
-    );
-  }
-
-  void _handleOfferwallTap() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Opening Premium Offerwall... Launching Browser Link!')),
-    );
   }
 
     @override
@@ -192,10 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: CashPawsColors.backgroundLight,
       drawer: const Drawer(
         child: Center(
-          child: Text(
-            'CashPaws Navigation Menu',
-            style: TextStyle(fontWeight: FontWeight.bold, color: CashPawsColors.textDark),
-          ),
+          child: Text('CashPaws Navigation Menu', style: TextStyle(fontWeight: FontWeight.bold, color: CashPawsColors.textDark)),
         ),
       ),
       appBar: AppBar(
@@ -207,16 +246,13 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        actions: [
+        actions: const [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: GestureDetector(
-              onTap: _handleProfileTap, // Opened profile handler function mapping
-              child: const CircleAvatar(
-                radius: 16,
-                backgroundColor: Colors.white,
-                child: Icon(Icons.person, size: 18, color: CashPawsColors.textDark),
-              ),
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.white,
+              child: Icon(Icons.person, size: 18, color: CashPawsColors.textDark),
             ),
           )
         ],
@@ -331,20 +367,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildTaskCard(
                       title: 'TASK 2: WALKING STEPS',
                       subtitle: '$userSteps / 5,000 Steps Today',
-                      badgeText: 'Rewarded Video Ad',
-                      buttonText: 'CLAIM ${CashPawsConfig.coinsWalkingSteps} COINS (WATCH VIDEO)',
+                      badgeText: 'Separate Screen View',
+                      buttonText: 'OPEN STEP TRACKER MODULE',
                       isDisabled: isDailyLimitMaxed,
-                      onTap: _handleWatchVideoReward,
+                      onTap: _openWalkingStepsWindow, // Connected the modal bottom sheet trigger
                     ),
                     const SizedBox(height: 14),
 
                     _buildTaskCard(
                       title: 'TASK 3: LUCKY SPIN WHEEL',
-                      subtitle: 'Spins Left: $remainingSpins / 5', 
-                      badgeText: 'Instant Payout',
-                      buttonText: 'SPIN NOW!',
-                      isDisabled: isDailyLimitMaxed || remainingSpins <= 0, 
-                      onTap: _handleLuckySpin,
+                      subtitle: 'Spins Left: $remainingSpins / 5',
+                      badgeText: 'Separate Modal View',
+                      buttonText: 'LAUNCH SPIN GAME SCREEN',
+                      isDisabled: isDailyLimitMaxed || remainingSpins <= 0,
+                      onTap: _openSpinWheelWindow, // Connected the popup alert modal trigger
                     ),
                     const SizedBox(height: 20),
 
@@ -363,18 +399,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
                               SizedBox(width: 6),
-                              Text(
-                                'INSTANT CASH SHORTCUT',
-                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.orange),
-                              ),
+                              Text('INSTANT CASH SHORTCUT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.orange)),
                             ],
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            'Want to skip the daily calculation limit?',
-                            style: TextStyle(fontSize: 11, color: CashPawsColors.textSecondary),
-                            textAlign: TextAlign.center,
-                          ),
+                          const Text('Want to skip the daily calculation limit?', style: TextStyle(fontSize: 11, color: CashPawsColors.textSecondary), textAlign: TextAlign.center),
                           const SizedBox(height: 12),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
@@ -384,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                               elevation: 0,
                             ),
-                            onPressed: _handleOfferwallTap, // Connected the operational handler method pointer
+                            onPressed: () {},
                             child: const Text('⚡ OPEN PREMIUM OFFERWALL', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                           ),
                         ],
@@ -406,9 +435,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   adUnitId: CashPawsConfig.bannerAdUnitId,
                   size: AdSize.banner,
                   request: const AdRequest(),
-                  listener: BannerAdListener(
-                    onAdFailedToLoad: (ad, error) => ad.dispose(),
-                  ),
+                  listener: BannerAdListener(onAdFailedToLoad: (ad, error) => ad.dispose()),
                 )..load(),
               ),
             ),
@@ -431,9 +458,7 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: CashPawsColors.cardSurface,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 2))
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 2))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -444,10 +469,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(title, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: CashPawsColors.textSecondary)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: CashPawsColors.backgroundLight,
-                  borderRadius: BorderRadius.circular(4),
-                ),
+                decoration: BoxDecoration(color: CashPawsColors.backgroundLight, borderRadius: BorderRadius.circular(4)),
                 child: Text(badgeText, style: const TextStyle(fontSize: 9, color: CashPawsColors.rewardOrange, fontWeight: FontWeight.bold)),
               ),
             ],

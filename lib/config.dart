@@ -1,14 +1,20 @@
-/// Supabase: Project Settings > API (Project URL and the "anon public" key).
-const kSupabaseUrl = 'https://qsjhblbeqyifmrxqbxaq.supabase.co';
-const kSupabaseAnonKey = 'sb_publishable__UZBCfFcsvJrPx7sb6f4xg_vbsLrqOu';
+class CashPawsConfig {
+  // Profit stabilization reward constraints
+  static const int maxDailyCoins = 182;
+  static const int maxAdMobCoins = 100;
+  static const int maxAppLovinCoins = 82;
 
-/// Only needed for Continue with Google: the WEB client ID from Google Cloud Console.
-const kGoogleWebClientId = 'YOUR-WEB-CLIENT-ID.apps.googleusercontent.com';
+  // Task-specific token values
+  static const int coinsDailyLogin = 10;
+  static const int coinsWalkingSteps = 20;
+  static const int coinsPerLuckySpin = 5;
 
-/// Your policy pages (GitHub Pages). Change them if you move the pages.
-const kPrivacyUrl = 'https://ambionvra21-ship-it.github.io/Cash_Paws/privacy.html';
-const kTermsUrl = 'https://ambionvra21-ship-it.github.io/Cash_Paws/terms.html';
+  // Financial monetary multiplier ($0.001 per coin)
+  static const double coinToUsdMultiplier = 0.001;
+  static const double targetWithdrawalThreshold = 2.00;
 
-/// Link that the Invite screen shares. Right now it downloads the newest APK from your GitHub releases.
-/// When the app is on Google Play, replace it with your Play Store link.
-const kPlayStoreUrl = 'https://github.com/ambionvra21-ship-it/Cash_Paws/releases/latest/download/app-release.apk';
+  // Placeholder Admob Network Deployment Strings
+  static const String bannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111';
+  static const String interstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712';
+  static const String rewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
+}

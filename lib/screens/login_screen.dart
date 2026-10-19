@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../config.dart';
 import '../services/backend.dart';
 import '../theme.dart';
@@ -16,6 +17,15 @@ class _LoginScreenState extends State<LoginScreen> {
   final email = TextEditingController();
   final pass = TextEditingController();
   bool busy = false;
+
+  Future<void> _open(String url) async {
+    try {
+      final ok = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      if (!ok && mounted) _msg('Could not open the page.');
+    } catch (_) {
+      if (mounted) _msg('Could not open the page.');
+    }
+  }
 
   void _msg(String t) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t)));
 
@@ -88,6 +98,10 @@ class _LoginScreenState extends State<LoginScreen> {
               if (googleReady)
                 TextButton(onPressed: busy ? null : _google, child: const Text('Continue with Google')),
               TextButton(onPressed: busy ? null : _guest, child: const Text('Continue as guest')),
+              Wrap(alignment: WrapAlignment.center, children: [
+                TextButton(onPressed: () => _open(kTermsUrl), child: const Text('Terms of Use', style: TextStyle(fontSize: 12))),
+                TextButton(onPressed: () => _open(kPrivacyUrl), child: const Text('Privacy Policy', style: TextStyle(fontSize: 12))),
+              ]),
               const Padding(
                 padding: EdgeInsets.only(top: 4),
                 child: Text('Guests can\u2019t use referral codes and may lose their coins if they uninstall.',

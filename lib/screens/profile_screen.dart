@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/backend.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../widgets/glow.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../services/api.dart';
 import '../theme.dart';
@@ -16,6 +18,28 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final name = TextEditingController();
   bool _loaded = false;
+  final upEmail = TextEditingController();
+  final upPass = TextEditingController();
+
+  /// Turns a guest account into a real one, keeping its coins.
+  Future<void> _upgrade() async {
+    final m = ScaffoldMessenger.of(context);
+    final e = upEmail.text.trim();
+    if (!e.contains('@') || upPass.text.length < 6) {
+      m.showSnackBar(const SnackBar(content: Text('Enter a valid email and a password of at least 6 characters.')));
+      return;
+    }
+    try {
+      await sb.auth.updateUser(UserAttributes(email: e, password: upPass.text));
+      try {
+        await sb.auth.refreshSession();
+      } catch (_) {}
+      m.showSnackBar(const SnackBar(content: Text('Saved! If we emailed you a link, open it to confirm.')));
+      if (mounted) setState(() {});
+    } on AuthException catch (err) {
+      m.showSnackBar(SnackBar(content: Text(err.message)));
+    }
+  }
 
   Future<void> _signOut() async {
     try {
@@ -57,6 +81,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
           final total = (d['total'] ?? 0) as num;
           final lv = total ~/ 500 + 1, into = (total % 500).toInt();
+          final email = sb.auth.currentUser?.email ?? '';
+          final guest = email.isEmpty;
           return ListView(padding: const EdgeInsets.all(20), children: [
             Center(child: CircleAvatar(radius: 44, backgroundColor: kSurface, child: Text(d['av'] ?? '\u{1F431}', style: const TextStyle(fontSize: 46)))),
             const SizedBox(height: 12),
@@ -88,6 +114,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
             ]),
             const SizedBox(height: 20),
+            if (guest)
+              NeonCard(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('Save your account', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                  const Text('Add an email and password to keep your coins and use referral codes.', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  const SizedBox(height: 10),
+                  TextField(controller: upEmail, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email')),
+                  const SizedBox(height: 10),
+                  TextField(controller: upPass, obscureText: true, decoration: const InputDecoration(labelText: 'Password (6+ characters)')),
+                  const SizedBox(height: 12),
+                  SizedBox(width: double.infinity, child: FilledButton(onPressed: _upgrade, child: const Text('Save account'))),
+                ]),
+              ),
+            ListTile(title: const Text('Email'), trailing: Text(guest ? 'Guest (no email)' : email)),
             ListTile(title: const Text('Total earned'), trailing: Text('$total')),
             ListTile(title: const Text('Friends joined'), trailing: Text('${d['refs'] ?? 0}')),
             ListTile(title: const Text('Member since'), trailing: Text('${d['joined'] ?? '-'}')),

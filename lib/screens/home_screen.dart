@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'dart:math' as math;
 import '../theme.dart';
 import '../config.dart';
 
@@ -11,12 +11,16 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   // Core Operational Earning Trackers
   int currentCoins = 0; 
   int remainingSpins = 5;
   int userSteps = 4520;
   bool isDailyLimitMaxed = false;
+
+  // Wheel Animation Elements
+  late AnimationController _wheelController;
+  double _wheelRotationAngle = 0.0;
 
   // AdMob Network SDK Reference Drivers
   InterstitialAd? _interstitialAd;
@@ -28,6 +32,22 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _initAdMobSDK();
+    
+    // Set up a simple 3-second code-based rotating animation spinner
+    _wheelController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..addListener(() {
+        setState(() {
+          _wheelRotationAngle = _wheelController.value * 2 * math.pi * 5; 
+        });
+      });
+  }
+
+  @override
+  void dispose() {
+    _wheelController.dispose();
+    super.dispose();
   }
 
   Future<void> _initAdMobSDK() async {
@@ -98,8 +118,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- Task Navigation Window Handlers ---
-
   void _handleDailyLogin() {
     if (_interstitialAd != null) {
       _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
@@ -119,7 +137,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Window 1: Separate Modal Bottom Sheet Panel for Walking Steps
   void _openWalkingStepsWindow() {
     showModalBottomSheet(
       context: context,
@@ -128,21 +145,28 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) {
         return Container(
           padding: const EdgeInsets.all(24.0),
-          height: 280,
+          height: 340,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Row(
                 children: [
-                  Icon(Icons.directions_walk, color: CashPawsColors.rewardOrange, size: 28),
+                  Icon(Icons.bar_chart, color: CashPawsColors.rewardOrange, size: 28),
                   SizedBox(width: 8),
-                  Text('Fitness Step Tracker', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: CashPawsColors.textDark)),
+                  Text('Steps Activity Monitoring', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: CashPawsColors.textDark)),
                 ],
               ),
-              const SizedBox(height: 16),
-              Text('Today: $userSteps / 5,000 Steps completed.', style: const TextStyle(color: CashPawsColors.textSecondary, fontSize: 14)),
-              const SizedBox(height: 8),
-              const Text('Watch a short premium ad sponsor video to claim your 20 Pawcoins reward!', style: TextStyle(fontSize: 13, color: CashPawsColors.textSecondary)),
+              const SizedBox(height: 20),
+              // Monitoring Graph Panel Widget Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _buildMiniGraphBar("2 Days Ago", 0.4, "2,000"),
+                  _buildMiniGraphBar("Yesterday", 0.7, "3,500"),
+                  _buildMiniGraphBar("Today", 0.9, "4,520", isHighlight: true),
+                ],
+              ),
               const Spacer(),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -154,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 onPressed: () {
                   Navigator.pop(context); 
-                  _handleWatchVideoReward();
+                  _handleWatchVideoReward(isSpinReward: false);
                 },
                 child: const Text('WATCH VIDEO AD TO CLAIM COINS', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
@@ -165,47 +189,90 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Window 2: Separate Dialog Modal Center Popup Window for the Spin Wheel (Fixed Error Here)
   void _openSpinWheelWindow() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: CashPawsColors.cardSurface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text('Lucky Spin Wheel ($remainingSpins/5 Left)', style: const TextStyle(color: CashPawsColors.textDark, fontSize: 16, fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Native Canvas Animated Custom Painter Wheel Spinner
+                  Transform.rotate(
+                    angle: _wheelRotationAngle,
+                    child: CustomPaint(
+                      size: const Size(160, 160),
+                      painter: BasicWheelPainter(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Icon(Icons.arrow_drop_up, color: CashPawsColors.rewardOrange, size: 32),
+                  const Text('Every spin safely launches a sponsor video ad!', style: TextStyle(fontSize: 12, color: CashPawsColors.textSecondary), textAlign: TextAlign.center),
+                ],
+              ),
+              actionsAlignment: MainAxisAlignment.stretch,
+              actions: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: CashPawsColors.rewardOrange,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    elevation: 0,
+                  ),
+                  onPressed: remainingSpins <= 0 || _wheelController.isAnimating || isDailyLimitMaxed ? null : () {
+                    // Trigger the animation rotation sequence first
+                    _wheelController.forward(from: 0.0).then((_) {
+                      setDialogState(() { remainingSpins--; });
+                      Navigator.pop(context); 
+                      _handleWatchVideoReward(isSpinReward: true); // Force ad display loop immediately on spin stop
+                    });
+                  },
+                  child: const Text('LAUNCH SPIN GAME', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _handleWatchVideoReward({required bool isSpinReward}) {
+    if (_rewardedAd != null) {
+      _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) { ad.dispose(); _rewardedAd = null; _loadRewardedAd(); },
+        onAdFailedToShowFullScreenContent: (ad, error) { ad.dispose(); _rewardedAd = null; _loadRewardedAd(); },
+      );
+      _rewardedAd!.show(
+        onUserEarnedReward: (ad, reward) => _processSecureReward(
+          isSpinReward ? CashPawsConfig.coinsPerLuckySpin : CashPawsConfig.coinsWalkingSteps
+        ),
+      );
+    } else {
+      _loadRewardedAd();
+      _processSecureReward(isSpinReward ? CashPawsConfig.coinsPerLuckySpin : CashPawsConfig.coinsWalkingSteps); 
+    }
+  }
+
+  void _openProfileSettingsWindow() {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: CashPawsColors.cardSurface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.casino, color: CashPawsColors.rewardOrange),
-              SizedBox(width: 8),
-              Text('Lucky Spin Wheel', style: TextStyle(color: CashPawsColors.textDark, fontSize: 18, fontWeight: FontWeight.bold)),
-            ],
-          ),
+          title: const Text('User Account Hub', style: TextStyle(color: CashPawsColors.textDark, fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text('Available Daily Attempts Left: $remainingSpins / 5', style: const TextStyle(fontWeight: FontWeight.bold, color: CashPawsColors.textDark)),
-              const SizedBox(height: 16),
-              const Text('Spin the lucky wheel now to claim an instant bonus payout of 5 Pawcoins directly into your wallet tracker balance.', style: TextStyle(fontSize: 13, color: CashPawsColors.textSecondary), textAlign: TextAlign.center),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: CashPawsColors.rewardOrange,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
-                  ),
-                  onPressed: remainingSpins <= 0 || isDailyLimitMaxed ? null : () {
-                    Navigator.pop(context); 
-                    setState(() { remainingSpins--; });
-                    _processSecureReward(CashPawsConfig.coinsPerLuckySpin);
-                  },
-                  child: const Text('SPIN THE WHEEL NOW', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ),
+              const ListTile(leading: Icon(Icons.account_circle, size: 40), title: Text('Verified User'), subtitle: Text('id: status_active_01')),
+              const Divider(),
+              ListTile(title: const Text('PayPal ID Payout Route'), subtitle: const Text('Not Configured'), trailing: TextButton(onPressed: (){}, child: const Text('Edit'))),
             ],
           ),
         );
@@ -213,36 +280,28 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _handleWatchVideoReward() {
-    if (_rewardedAd != null) {
-      _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-        onAdDismissedFullScreenContent: (ad) { ad.dispose(); _rewardedAd = null; _loadRewardedAd(); },
-        onAdFailedToShowFullScreenContent: (ad, error) { ad.dispose(); _rewardedAd = null; _loadRewardedAd(); },
-      );
-      _rewardedAd!.show(onUserEarnedReward: (ad, reward) => _processSecureReward(CashPawsConfig.coinsWalkingSteps));
-    } else {
-      _loadRewardedAd();
-      _processSecureReward(CashPawsConfig.coinsWalkingSteps); 
-    }
+  Widget _buildMiniGraphBar(String label, double fillPct, String stepCount, {bool isHighlight = false}) {
+    return Column(
+      children: [
+        Text(stepCount, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isHighlight ? CashPawsColors.rewardOrange : CashPawsColors.textSecondary)),
+        const SizedBox(height: 6),
+        Container(
+          height: 100,
+          width: 24,
+          decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(6)),
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            height: 100 * fillPct,
+            decoration: BoxDecoration(color: isHighlight ? CashPawsColors.rewardOrange : Colors.grey.shade400, borderRadius: BorderRadius.circular(6)),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(label, style: const TextStyle(fontSize: 10, color: CashPawsColors.textSecondary)),
+      ],
+    );
   }
 
-  /// Handles opening the live web Offerwall redirect link safely
-  void _handleOfferwallRedirect() async {
-    // Replace with your real CPALead / Adscend link later when you launch
-    final Uri offerwallUri = Uri.parse('https://google.com'); 
-    
-    if (await canLaunchUrl(offerwallUri)) {
-      await launchUrl(offerwallUri, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not launch Offerwall. Check connection!')),
-        );
-      }
-    }
-  }
-
-    @override
+  @override
   Widget build(BuildContext context) {
     double dailyProgress = (currentCoins / CashPawsConfig.maxDailyCoins).clamp(0.0, 1.0);
     double walletUsdValue = currentCoins * CashPawsConfig.coinToUsdMultiplier;
@@ -264,13 +323,16 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.white,
-              child: Icon(Icons.person, size: 18, color: CashPawsColors.textDark),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: GestureDetector(
+              onTap: _openProfileSettingsWindow, // Fixed: Opens separate profile summary layout center window on tap
+              child: const CircleAvatar(
+                radius: 16,
+                backgroundColor: Colors.white,
+                child: Icon(Icons.person, size: 18, color: CashPawsColors.textDark),
+              ),
             ),
           )
         ],
@@ -294,9 +356,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
-                        ],
                       ),
                       child: Column(
                         children: [
@@ -308,11 +367,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           Text(
                             '$currentCoins / ${CashPawsConfig.maxDailyCoins} COINS',
                             style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900, color: Colors.white),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            isDailyLimitMaxed ? 'DAILY GOAL REACHED [MAXED]' : 'DAILY GOAL TARGET',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70),
                           ),
                           const SizedBox(height: 14),
                           ClipRRect(
@@ -329,31 +383,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                                        // --- 2. Live Wallet Value Conversion Indicator ---
+                                        // --- 2. Live Wallet Value Indicator ---
                     Container(
                       padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: CashPawsColors.cardSurface,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      decoration: BoxDecoration(color: CashPawsColors.cardSurface, borderRadius: BorderRadius.circular(12)),
                       child: Column(
                         children: [
-                          const Text(
-                            'WALLET VALUE',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CashPawsColors.textSecondary),
-                          ),
-                          const SizedBox(height: 6),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'CURRENT BALANCE: \$${walletUsdValue.toStringAsFixed(2)} USD',
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CashPawsColors.textDark),
-                              ),
-                              Text(
-                                'NEXT PAYOUT: \$${CashPawsConfig.targetWithdrawalThreshold.toStringAsFixed(2)}',
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CashPawsColors.textDark),
-                              ),
+                              Text('CURRENT BALANCE: \$${walletUsdValue.toStringAsFixed(2)} USD', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CashPawsColors.textDark)),
+                              Text('Progress to \$${CashPawsConfig.targetWithdrawalThreshold.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11, color: CashPawsColors.textSecondary)),
                             ],
                           ),
                           const SizedBox(height: 10),
@@ -372,21 +412,45 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 20),
 
                     // --- 3. Interactive Task Segment Control Blocks ---
-                    _buildTaskCard(
-                      title: 'TASK 1: DAILY LOGIN STREAK',
-                      subtitle: 'Day 5 Bonus',
-                      badgeText: 'Triggers Ad',
-                      buttonText: 'CLAIM +${CashPawsConfig.coinsDailyLogin} COINS',
-                      isDisabled: isDailyLimitMaxed,
-                      onTap: _handleDailyLogin,
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(color: CashPawsColors.cardSurface, borderRadius: BorderRadius.circular(12)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('TASK 1: DAILY LOGIN STREAK', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: CashPawsColors.textSecondary)),
+                              Icon(Icons.calendar_month, color: CashPawsColors.rewardOrange, size: 16),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          // Weekly Calendar Multi-Day Completion Indicator Row Setup
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: List.generate(5, (index) => CircleAvatar(
+                              radius: 14,
+                              backgroundColor: index < 3 ? CashPawsColors.rewardOrange : Colors.grey.shade200,
+                              child: Icon(Icons.check, size: 14, color: index < 3 ? Colors.white : Colors.grey),
+                            )),
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(backgroundColor: CashPawsColors.rewardOrange, foregroundColor: Colors.white, elevation: 0),
+                            onPressed: isDailyLimitMaxed ? null : _handleDailyLogin,
+                            child: const Text('CLAIM DAILY BONUS COINS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 14),
 
                     _buildTaskCard(
                       title: 'TASK 2: WALKING STEPS',
                       subtitle: '$userSteps / 5,000 Steps Today',
-                      badgeText: 'Separate Screen View',
-                      buttonText: 'OPEN STEP TRACKER MODULE',
+                      badgeText: 'Monitoring Graph',
+                      buttonText: 'OPEN ACTIVITY TRACKER SCREEN',
                       isDisabled: isDailyLimitMaxed,
                       onTap: _openWalkingStepsWindow, 
                     ),
@@ -395,54 +459,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildTaskCard(
                       title: 'TASK 3: LUCKY SPIN WHEEL',
                       subtitle: 'Spins Left: $remainingSpins / 5',
-                      badgeText: 'Separate Modal View',
-                      buttonText: 'LAUNCH SPIN GAME SCREEN',
+                      badgeText: 'Code-Based Wheel Screen',
+                      buttonText: 'LAUNCH ANIMATED SPIN MINI-GAME',
                       isDisabled: isDailyLimitMaxed || remainingSpins <= 0,
                       onTap: _openSpinWheelWindow, 
-                    ),
-                    const SizedBox(height: 20),
-
-                    // --- 4. High-Yield Offerwall Alternative Pathway ---
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: CashPawsColors.cardSurface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1),
-                      ),
-                      child: Column(
-                        children: [
-                          const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
-                              SizedBox(width: 6),
-                              Text('INSTANT CASH SHORTCUT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.orange)),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          const Text('Want to skip the daily calculation limit?', style: TextStyle(fontSize: 11, color: CashPawsColors.textSecondary), textAlign: TextAlign.center),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: CashPawsColors.rewardOrange,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                              elevation: 0,
-                            ),
-                            onPressed: _handleOfferwallRedirect, // Connected the URL launcher redirect handler
-                            child: const Text('⚡ OPEN PREMIUM OFFERWALL', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                          ),
-                        ],
-                      ),
                     ),
                   ],
                 ),
               ),
             ),
 
-                        // --- 5. Dedicated Anchored Base Footprint for AdMob ---
+                        // Anchored Base Footer Ad Footprint for AdMob
             Container(
               width: double.infinity,
               height: 54,
@@ -473,11 +500,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: CashPawsColors.cardSurface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 2))],
-      ),
+      decoration: BoxDecoration(color: CashPawsColors.cardSurface, borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -496,15 +519,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(subtitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: CashPawsColors.textDark)),
           const SizedBox(height: 12),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: CashPawsColors.rewardOrange,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: const Color(0xFFCBD5E1),
-              disabledForegroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              elevation: 0,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: CashPawsColors.rewardOrange, foregroundColor: Colors.white, elevation: 0),
             onPressed: isDisabled ? null : onTap,
             child: Text(buttonText, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
           ),
@@ -512,4 +527,32 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+/// Draws an 8-segmented flat color prize game wheel on a code-based canvas circle
+class BasicWheelPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+    const segmentAngle = 2 * math.pi / 8;
+
+    for (int i = 0; i < 8; i++) {
+      paint.color = (i % 2 == 0) ? const Color(0xFFFE8844) : Colors.amber.shade400;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        i * segmentAngle,
+        segmentAngle,
+        true,
+        paint,
+      );
+    }
+    // Draw a small central pin caps dot
+    paint.color = Colors.white;
+    canvas.drawCircle(center, 12, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

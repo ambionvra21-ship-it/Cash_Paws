@@ -22,8 +22,8 @@ class CashPawsApp extends StatelessWidget {
       title: 'CashPaws',
       debugShowCheckedModeBanner: false,
       
-      // Inject our verified neon-green dark mode scheme properties
-      theme: CashPawsTheme.darkTheme,
+      // FIX: Changed from darkTheme to lightTheme to match your new orange palette
+      theme: CashPawsTheme.lightTheme,
       
       // Lock down the permanent initial landing route destination
       home: const HomeScreen(),

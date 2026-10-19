@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../theme.dart';
 import '../config.dart';
 
@@ -114,11 +115,11 @@ class _HomeScreenState extends State<HomeScreen> {
       _interstitialAd!.show();
     } else {
       _loadInterstitialAd();
-      _processSecureReward(CashPawsConfig.coinsDailyLogin); // Payout for seamless offline testing
+      _processSecureReward(CashPawsConfig.coinsDailyLogin); 
     }
   }
 
-  /// Window 1: Separate Modal Bottom Sheet Panel for Walking Step Multipliers
+  /// Window 1: Separate Modal Bottom Sheet Panel for Walking Steps
   void _openWalkingStepsWindow() {
     showModalBottomSheet(
       context: context,
@@ -152,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   elevation: 0,
                 ),
                 onPressed: () {
-                  Navigator.pop(context); // Close separate sheet window panel container
+                  Navigator.pop(context); 
                   _handleWatchVideoReward();
                 },
                 child: const Text('WATCH VIDEO AD TO CLAIM COINS', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -164,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Window 2: Separate Dialog Modal Center Popup Window for the Spin Wheel
+  /// Window 2: Separate Dialog Modal Center Popup Window for the Spin Wheel (Fixed Error Here)
   void _openSpinWheelWindow() {
     showDialog(
       context: context,
@@ -186,26 +187,27 @@ class _HomeScreenState extends State<HomeScreen> {
               Text('Available Daily Attempts Left: $remainingSpins / 5', style: const TextStyle(fontWeight: FontWeight.bold, color: CashPawsColors.textDark)),
               const SizedBox(height: 16),
               const Text('Spin the lucky wheel now to claim an instant bonus payout of 5 Pawcoins directly into your wallet tracker balance.', style: TextStyle(fontSize: 13, color: CashPawsColors.textSecondary), textAlign: TextAlign.center),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: CashPawsColors.rewardOrange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    elevation: 0,
+                  ),
+                  onPressed: remainingSpins <= 0 || isDailyLimitMaxed ? null : () {
+                    Navigator.pop(context); 
+                    setState(() { remainingSpins--; });
+                    _processSecureReward(CashPawsConfig.coinsPerLuckySpin);
+                  },
+                  child: const Text('SPIN THE WHEEL NOW', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
             ],
           ),
-          actionsAlignment: MainAxisAlignment.stretch,
-          actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: CashPawsColors.rewardOrange,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                elevation: 0,
-              ),
-              onPressed: remainingSpins <= 0 || isDailyLimitMaxed ? null : () {
-                Navigator.pop(context); // Dismiss center alert popup window
-                setState(() { remainingSpins--; });
-                _processSecureReward(CashPawsConfig.coinsPerLuckySpin);
-              },
-              child: const Text('SPIN THE WHEEL NOW', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
         );
       },
     );
@@ -220,7 +222,23 @@ class _HomeScreenState extends State<HomeScreen> {
       _rewardedAd!.show(onUserEarnedReward: (ad, reward) => _processSecureReward(CashPawsConfig.coinsWalkingSteps));
     } else {
       _loadRewardedAd();
-      _processSecureReward(CashPawsConfig.coinsWalkingSteps); // Payout fallback safety loop
+      _processSecureReward(CashPawsConfig.coinsWalkingSteps); 
+    }
+  }
+
+  /// Handles opening the live web Offerwall redirect link safely
+  void _handleOfferwallRedirect() async {
+    // Replace with your real CPALead / Adscend link later when you launch
+    final Uri offerwallUri = Uri.parse('https://google.com'); 
+    
+    if (await canLaunchUrl(offerwallUri)) {
+      await launchUrl(offerwallUri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not launch Offerwall. Check connection!')),
+        );
+      }
     }
   }
 
@@ -370,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       badgeText: 'Separate Screen View',
                       buttonText: 'OPEN STEP TRACKER MODULE',
                       isDisabled: isDailyLimitMaxed,
-                      onTap: _openWalkingStepsWindow, // Connected the modal bottom sheet trigger
+                      onTap: _openWalkingStepsWindow, 
                     ),
                     const SizedBox(height: 14),
 
@@ -380,7 +398,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       badgeText: 'Separate Modal View',
                       buttonText: 'LAUNCH SPIN GAME SCREEN',
                       isDisabled: isDailyLimitMaxed || remainingSpins <= 0,
-                      onTap: _openSpinWheelWindow, // Connected the popup alert modal trigger
+                      onTap: _openSpinWheelWindow, 
                     ),
                     const SizedBox(height: 20),
 
@@ -413,7 +431,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                               elevation: 0,
                             ),
-                            onPressed: () {},
+                            onPressed: _handleOfferwallRedirect, // Connected the URL launcher redirect handler
                             child: const Text('⚡ OPEN PREMIUM OFFERWALL', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                           ),
                         ],

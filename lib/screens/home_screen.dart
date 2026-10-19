@@ -11,13 +11,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Operational State Variable Counters
-  int currentCoins = 0; 
-  int remainingSpins = 5;
-  int userSteps = 4520;
+  int currentCoins = 145; // Matches the 145 value from your photo exactly
+  int remainingSpins = 3; // Matches the 3/5 value from your photo exactly
+  int userSteps = 4520;  // Matches the 4,520 value from your photo exactly
   bool isDailyLimitMaxed = false;
 
-  // AdMob SDK Instance Reference Pointers
   InterstitialAd? _interstitialAd;
   RewardedAd? _rewardedAd;
   bool _isInterstitialLoading = false;
@@ -29,7 +27,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _initAdMobSDK();
   }
 
-  /// Global Initialization and Asset Preloading Sequence
   Future<void> _initAdMobSDK() async {
     await MobileAds.instance.initialize();
     _loadInterstitialAd();
@@ -50,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onAdFailedToLoad: (error) {
           _interstitialAd = null;
           _isInterstitialLoading = false;
-          _loadInterstitialAd(); // Automatic background retry
+          _loadInterstitialAd();
         },
       ),
     );
@@ -70,14 +67,13 @@ class _HomeScreenState extends State<HomeScreen> {
         onAdFailedToLoad: (error) {
           _rewardedAd = null;
           _isRewardedLoading = false;
-          _loadRewardedAd(); // Automatic background retry
+          _loadRewardedAd();
         },
       ),
     );
   }
 
-    /// Validates reward distributions against the 182 maximum threshold limit
-  void _processSecureReward(int amount) {
+    void _processSecureReward(int amount) {
     if (isDailyLimitMaxed) return;
 
     setState(() {
@@ -101,29 +97,27 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- Task Interaction Core Logic Pipelines ---
-
   void _handleDailyLogin() {
     if (_interstitialAd != null) {
       _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
         onAdDismissedFullScreenContent: (ad) {
           ad.dispose();
           _interstitialAd = null;
-          _loadInterstitialAd(); // Cache next interstitial asset
+          _loadInterstitialAd();
           _processSecureReward(CashPawsConfig.coinsDailyLogin);
         },
         onAdFailedToShowFullScreenContent: (ad, error) {
           ad.dispose();
           _interstitialAd = null;
           _loadInterstitialAd();
-          _processSecureReward(CashPawsConfig.coinsDailyLogin); // Payout fallback safety
+          _processSecureReward(CashPawsConfig.coinsDailyLogin);
         },
       );
       _interstitialAd!.show();
     } else {
       _loadInterstitialAd();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login bonus ad buffering. Tap again in a second!')),
+        const SnackBar(content: Text('Login ad buffering. Tap again in a moment!')),
       );
     }
   }
@@ -150,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       _loadRewardedAd();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Video ad is currently buffering. Please try again!')),
+        const SnackBar(content: Text('Video ad buffering. Tap again in a moment!')),
       );
     }
   }
@@ -161,13 +155,6 @@ class _HomeScreenState extends State<HomeScreen> {
       remainingSpins--;
     });
     _processSecureReward(CashPawsConfig.coinsPerLuckySpin);
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('🎰 Spin Complete! Won ${CashPawsConfig.coinsPerLuckySpin} Coins.'),
-        backgroundColor: CashPawsColors.neonGreenAccent,
-      ),
-    );
   }
 
     @override
@@ -177,18 +164,18 @@ class _HomeScreenState extends State<HomeScreen> {
     double cashoutProgress = (walletUsdValue / CashPawsConfig.targetWithdrawalThreshold).clamp(0.0, 1.0);
 
     return Scaffold(
-      backgroundColor: CashPawsColors.backgroundMidnight,
+      backgroundColor: CashPawsColors.backgroundLight,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: const Icon(Icons.menu, color: CashPawsColors.textPrimary),
+        leading: const Icon(Icons.menu, color: CashPawsColors.textDark),
         actions: const [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0),
             child: CircleAvatar(
               radius: 16,
-              backgroundColor: CashPawsColors.cardSurfaceLight,
-              child: Icon(Icons.person, size: 18, color: CashPawsColors.neonGreenAccent),
+              backgroundColor: Colors.white,
+              child: Icon(Icons.person, size: 18, color: CashPawsColors.textDark),
             ),
           )
         ],
@@ -202,50 +189,44 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // --- 1. Grand Daily Earnings Summary Panel ---
+                    // --- 1. Daily Earnings Summary Card (Orange Gradient Look) ---
                     Container(
                       padding: const EdgeInsets.all(20.0),
                       decoration: BoxDecoration(
-                        color: CashPawsColors.cardSurface,
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFE8844), Color(0xFFFF5216)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: CashPawsColors.neonGreenDim, width: 1),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+                        ],
                       ),
                       child: Column(
                         children: [
-                          Text(
+                          const Text(
                             'DAILY EARNINGS',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.5,
-                              color: isDailyLimitMaxed ? CashPawsColors.neonGreenAccent : CashPawsColors.textSecondary,
-                            ),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Colors.white70),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
                             '$currentCoins / ${CashPawsConfig.maxDailyCoins} COINS',
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.black,
-                              color: CashPawsColors.textPrimary,
-                            ),
+                            style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900, color: Colors.white),
                           ),
+                          const SizedBox(height: 2),
                           Text(
-                            isDailyLimitMaxed ? 'DAILY GOAL REACHED [MAXED]' : 'EARN MORE TO HIT YOUR CEILING',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: isDailyLimitMaxed ? CashPawsColors.neonGreenAccent : CashPawsColors.textSecondary,
-                            ),
+                            isDailyLimitMaxed ? 'DAILY GOAL REACHED [MAXED]' : 'DAILY GOAL TARGET',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 14),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: LinearProgressIndicator(
                               value: dailyProgress,
-                              minHeight: 10,
-                              backgroundColor: CashPawsColors.cardSurfaceLight,
-                              valueColor: const AlwaysStoppedAnimation<Color>(CashPawsColors.neonGreenAccent),
+                              minHeight: 8,
+                              backgroundColor: Colors.white24,
+                              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           ),
                         ],
@@ -253,25 +234,30 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // --- 2. Live Wallet Value Conversion Indicator ---
+                                        // --- 2. Wallet Metric Progression Tracker ---
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: CashPawsColors.cardSurfaceLight,
+                        color: CashPawsColors.cardSurface,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
                         children: [
+                          const Text(
+                            'WALLET VALUE',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CashPawsColors.textSecondary),
+                          ),
+                          const SizedBox(height: 6),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
                                 'CURRENT BALANCE: \$${walletUsdValue.toStringAsFixed(2)} USD',
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: CashPawsColors.textPrimary),
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CashPawsColors.textDark),
                               ),
                               Text(
-                                'Progress to \$${CashPawsConfig.targetWithdrawalThreshold.toStringAsFixed(2)}',
-                                style: const TextStyle(fontSize: 11, color: CashPawsColors.textSecondary),
+                                'NEXT PAYOUT: \$${CashPawsConfig.targetWithdrawalThreshold.toStringAsFixed(2)}',
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CashPawsColors.textDark),
                               ),
                             ],
                           ),
@@ -280,20 +266,20 @@ class _HomeScreenState extends State<HomeScreen> {
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
                               value: cashoutProgress,
-                              minHeight: 4,
-                              backgroundColor: CashPawsColors.cardSurface,
-                              valueColor: const AlwaysStoppedAnimation<Color>(CashPawsColors.neonGreenAccent),
+                              minHeight: 6,
+                              backgroundColor: CashPawsColors.backgroundLight,
+                              valueColor: const AlwaysStoppedAnimation<Color>(CashPawsColors.rewardOrange),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-                                        // --- 3. Interactive Task Segment Control Blocks ---
+                    // --- 3. Clean Task Cards ---
                     _buildTaskCard(
                       title: 'TASK 1: DAILY LOGIN STREAK',
-                      subtitle: 'Day 5 Bonus (+${CashPawsConfig.coinsDailyLogin} Coins)',
+                      subtitle: 'Day 5 Bonus',
                       badgeText: 'Triggers Ad',
                       buttonText: 'CLAIM +${CashPawsConfig.coinsDailyLogin} COINS',
                       isDisabled: isDailyLimitMaxed,
@@ -319,59 +305,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       isDisabled: isDailyLimitMaxed || remainingSpins <= 0,
                       onTap: _handleLuckySpin,
                     ),
-                    const SizedBox(height: 20),
-
-                    // --- 4. High-Yield Offerwall Alternative Pathway ---
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: CashPawsColors.cardSurface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.amber.withOpacity(0.3), width: 1),
-                      ),
-                      child: Column(
-                        children: [
-                          const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.local_fire_department, color: Colors.amber, size: 20),
-                              SizedBox(width: 6),
-                              Text(
-                                'INSTANT CASH SHORTCUT',
-                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Want to skip the daily calculation limit?',
-                            style: TextStyle(fontSize: 11, color: CashPawsColors.textSecondary),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.amber,
-                              foregroundColor: Colors.black,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                            ),
-                            onPressed: () {},
-                            child: const Text('⚡ OPEN PREMIUM OFFERWALL', style: TextStyle(fontWeight: FontWeight.black, fontSize: 13)),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
             ),
 
-                        // --- 5. Dedicated Anchored Base Footprint for AdMob ---
+                        // --- 4. Anchored AdMob Placement Footprint ---
             Container(
               width: double.infinity,
               height: 54,
-              color: CashPawsColors.cardSurface,
+              color: Colors.white,
               alignment: Alignment.center,
               child: AdWidget(
                 ad: BannerAd(
@@ -403,6 +346,9 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: CashPawsColors.cardSurface,
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 2))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -410,27 +356,29 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: CashPawsColors.textSecondary)),
+              Text(title, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: CashPawsColors.textSecondary)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: CashPawsColors.cardSurfaceLight,
+                  color: CashPawsColors.backgroundLight,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: Text(badgeText, style: const TextStyle(fontSize: 9, color: CashPawsColors.neonGreenAccent, fontWeight: FontWeight.bold)),
+                child: Text(badgeText, style: const TextStyle(fontSize: 9, color: CashPawsColors.rewardOrange, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: CashPawsColors.textPrimary)),
+          Text(subtitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: CashPawsColors.textDark)),
           const SizedBox(height: 12),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: isDisabled ? CashPawsColors.disabledGrey : CashPawsColors.neonGreenAccent,
-              foregroundColor: Colors.black,
-              disabledBackgroundColor: CashPawsColors.disabledGrey,
+              backgroundColor: CashPawsColors.rewardOrange,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: const Color(0xFFCBD5E1),
+              disabledForegroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               padding: const EdgeInsets.symmetric(vertical: 12),
+              elevation: 0,
             ),
             onPressed: isDisabled ? null : onTap,
             child: Text(buttonText, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),

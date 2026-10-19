@@ -1,43 +1,32 @@
 import 'package:flutter/material.dart';
 
-// Change these hex codes to restyle the whole app (keep the 0xFF at the start).
-const kBg = Color(0xFF05070D);       // main background
-const kSurface = Color(0xFF0B1220);  // cards and bars
-const kLine = Color(0xFF12315C);     // card borders
-const kNeon = Color(0xFF14D1FF);     // main glow colour
-const kNeon2 = Color(0xFF2F6BFF);    // second colour of the gradient
+class CashPawsColors {
+  // Deep matte dark background shades
+  static const Color backgroundMidnight = Color(0xFF0D0E11);
+  static const Color cardSurface = Color(0xFF16181F);
+  static const Color cardSurfaceLight = Color(0xFF20232E);
 
-final cashPawsTheme = ThemeData(
-  useMaterial3: true,
-  brightness: Brightness.dark,
-  scaffoldBackgroundColor: kBg,
-  colorScheme: const ColorScheme.dark(primary: kNeon, secondary: kNeon2, surface: kSurface),
-  appBarTheme: const AppBarTheme(backgroundColor: kSurface),
-  navigationBarTheme: NavigationBarThemeData(
-    backgroundColor: kSurface,
-    indicatorColor: kNeon.withOpacity(.18),
-    labelTextStyle: WidgetStateProperty.all(const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
-  ),
-  filledButtonTheme: FilledButtonThemeData(
-    style: FilledButton.styleFrom(
-      backgroundColor: kNeon,
-      foregroundColor: const Color(0xFF001018),
-      shape: const StadiumBorder(),
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-      textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-    ),
-  ),
-  inputDecorationTheme: InputDecorationTheme(
-    filled: true,
-    fillColor: kSurface,
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: kLine)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: kLine)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: kNeon)),
-  ),
-  snackBarTheme: SnackBarThemeData(
-    behavior: SnackBarBehavior.floating,
-    backgroundColor: kSurface,
-    contentTextStyle: const TextStyle(color: Colors.white),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: kLine)),
-  ),
-);
+  // High-contrast vibrant accents
+  static const Color neonGreenAccent = Color(0xFF00FF66);
+  static const Color neonGreenDim = Color(0x3300FF66); // For subtle glowing overlays
+  
+  // Neutral text definitions
+  static const Color textPrimary = Colors.white;
+  static const Color textSecondary = Color(0xFF8A8F9E);
+  static const Color disabledGrey = Color(0xFF434651);
+}
+
+class CashPawsTheme {
+  static ThemeData get darkTheme {
+    return ThemeData(
+      scaffoldBackgroundColor: CashPawsColors.backgroundMidnight,
+      brightness: Brightness.dark,
+      primaryColor: CashPawsColors.neonGreenAccent,
+      cardColor: CashPawsColors.cardSurface,
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: CashPawsColors.textPrimary, fontFamily: 'Roboto'),
+        bodyMedium: TextStyle(color: CashPawsColors.textSecondary, fontFamily: 'Roboto'),
+      ),
+    );
+  }
+}

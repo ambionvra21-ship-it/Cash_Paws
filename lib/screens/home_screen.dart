@@ -11,11 +11,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int currentCoins = 145; // Matches the 145 value from your photo exactly
-  int remainingSpins = 3; // Matches the 3/5 value from your photo exactly
-  int userSteps = 4520;  // Matches the 4,520 value from your photo exactly
+  // Operational State counters reset to 0 for live phone testing
+  int currentCoins = 0; 
+  int remainingSpins = 5;
+  int userSteps = 4520;
   bool isDailyLimitMaxed = false;
 
+  // AdMob SDK Instance pointers
   InterstitialAd? _interstitialAd;
   RewardedAd? _rewardedAd;
   bool _isInterstitialLoading = false;
@@ -27,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _initAdMobSDK();
   }
 
+  /// Global Initialization and Asset Preloading Sequence
   Future<void> _initAdMobSDK() async {
     await MobileAds.instance.initialize();
     _loadInterstitialAd();
@@ -47,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onAdFailedToLoad: (error) {
           _interstitialAd = null;
           _isInterstitialLoading = false;
-          _loadInterstitialAd();
+          _loadInterstitialAd(); // Automatic retry loop
         },
       ),
     );
@@ -67,13 +70,14 @@ class _HomeScreenState extends State<HomeScreen> {
         onAdFailedToLoad: (error) {
           _rewardedAd = null;
           _isRewardedLoading = false;
-          _loadRewardedAd();
+          _loadRewardedAd(); // Automatic retry loop
         },
       ),
     );
   }
 
-    void _processSecureReward(int amount) {
+    /// Validates reward distributions against the 182 maximum threshold limit
+  void _processSecureReward(int amount) {
     if (isDailyLimitMaxed) return;
 
     setState(() {
@@ -97,27 +101,29 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // --- Task Interaction Core Logic Pipelines ---
+
   void _handleDailyLogin() {
     if (_interstitialAd != null) {
       _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
         onAdDismissedFullScreenContent: (ad) {
           ad.dispose();
           _interstitialAd = null;
-          _loadInterstitialAd();
+          _loadInterstitialAd(); // Cache next interstitial asset
           _processSecureReward(CashPawsConfig.coinsDailyLogin);
         },
         onAdFailedToShowFullScreenContent: (ad, error) {
           ad.dispose();
           _interstitialAd = null;
           _loadInterstitialAd();
-          _processSecureReward(CashPawsConfig.coinsDailyLogin);
+          _processSecureReward(CashPawsConfig.coinsDailyLogin); // Payout fallback safety
         },
       );
       _interstitialAd!.show();
     } else {
       _loadInterstitialAd();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login ad buffering. Tap again in a moment!')),
+        const SnackBar(content: Text('Login bonus ad buffering. Tap again in a second!')),
       );
     }
   }
@@ -144,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       _loadRewardedAd();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Video ad buffering. Tap again in a moment!')),
+        const SnackBar(content: Text('Video ad is currently buffering. Please try again!')),
       );
     }
   }
@@ -155,6 +161,13 @@ class _HomeScreenState extends State<HomeScreen> {
       remainingSpins--;
     });
     _processSecureReward(CashPawsConfig.coinsPerLuckySpin);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('🎰 Spin Complete! Won ${CashPawsConfig.coinsPerLuckySpin} Coins.'),
+        backgroundColor: CashPawsColors.rewardOrange,
+      ),
+    );
   }
 
     @override
@@ -165,10 +178,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: CashPawsColors.backgroundLight,
+      // Fully functional native sliding drawer navigation panel hook
+      drawer: const Drawer(
+        child: Center(
+          child: Text(
+            'CashPaws Navigation Menu',
+            style: TextStyle(fontWeight: FontWeight.bold, color: CashPawsColors.textDark),
+          ),
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: const Icon(Icons.menu, color: CashPawsColors.textDark),
+        // Wraps the hamburger icon inside a Builder to cleanly pop out the menu drawer on tap
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: CashPawsColors.textDark),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         actions: const [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0),
@@ -189,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // --- 1. Daily Earnings Summary Card (Orange Gradient Look) ---
+                    // --- 1. Grand Daily Earnings Summary Panel ---
                     Container(
                       padding: const EdgeInsets.all(20.0),
                       decoration: BoxDecoration(
@@ -234,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                                        // --- 2. Wallet Metric Progression Tracker ---
+                                        // --- 2. Live Wallet Value Conversion Indicator ---
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -276,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // --- 3. Clean Task Cards ---
+                    // --- 3. Interactive Task Segment Control Blocks ---
                     _buildTaskCard(
                       title: 'TASK 1: DAILY LOGIN STREAK',
                       subtitle: 'Day 5 Bonus',
@@ -305,12 +333,56 @@ class _HomeScreenState extends State<HomeScreen> {
                       isDisabled: isDailyLimitMaxed || remainingSpins <= 0,
                       onTap: _handleLuckySpin,
                     ),
+                    const SizedBox(height: 20),
+
+                    // --- 4. High-Yield Offerwall Alternative Pathway ---
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: CashPawsColors.cardSurface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1),
+                      ),
+                      child: Column(
+                        children: [
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
+                              SizedBox(width: 6),
+                              Text(
+                                'INSTANT CASH SHORTCUT',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.orange),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Want to skip the daily calculation limit?',
+                            style: TextStyle(fontSize: 11, color: CashPawsColors.textSecondary),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: CashPawsColors.rewardOrange,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                              elevation: 0,
+                            ),
+                            onPressed: () {}, // Ready to link up a web browser launcher shortcut
+                            child: const Text('⚡ OPEN PREMIUM OFFERWALL', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
 
-                        // --- 4. Anchored AdMob Placement Footprint ---
+                        // --- 5. Dedicated Anchored Base Footprint for AdMob ---
             Container(
               width: double.infinity,
               height: 54,
